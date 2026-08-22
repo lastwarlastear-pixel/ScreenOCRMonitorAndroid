@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.screenocr.monitor.app-mergeDebugResources-35:/values-w320dp-land-v13/values-w320dp-land-v13.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\imran\\.gradle\\caches\\9.3.0\\transforms\\899b6de96f17e33927e89355c3d26b2d\\workspace\\transformed\\material-1.12.0\\res\\values-w320dp-land-v13\\values-w320dp-land-v13.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,110",
+                        "endColumns": "54,61",
+                        "endOffsets": "105,167"
+                    }
+                }
+            ]
+        }
+    ]
+}
