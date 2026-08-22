@@ -82,9 +82,6 @@ class OverlayService : Service() {
         }
         borderParams = params
 
-        val tvInfo = view.findViewById<TextView>(R.id.tvRegionInfo)
-        tvInfo.text = "OCR (${width}x${height})"
-
         // Drag to move region
         var initialX = 0
         var initialY = 0
@@ -109,6 +106,7 @@ class OverlayService : Service() {
                 }
                 MotionEvent.ACTION_UP -> {
                     saveRegion()
+                    android.widget.Toast.makeText(this@OverlayService, "Region Saved", android.widget.Toast.LENGTH_SHORT).show()
                     true
                 }
                 else -> false
@@ -133,13 +131,13 @@ class OverlayService : Service() {
                     val newH = max(100, initH + (event.rawY - initialTouchY).toInt())
                     params.width = newW
                     params.height = newH
-                    tvInfo.text = "OCR ($newW x $newH)"
                     windowManager.updateViewLayout(view, params)
                     updateSelectedRegionFromParams()
                     true
                 }
                 MotionEvent.ACTION_UP -> {
                     saveRegion()
+                    android.widget.Toast.makeText(this@OverlayService, "Region Saved", android.widget.Toast.LENGTH_SHORT).show()
                     true
                 }
                 else -> false
@@ -268,20 +266,27 @@ class OverlayService : Service() {
                 }
             }
             borderView?.visibility = View.VISIBLE
+            android.widget.Toast.makeText(this, "Region Box Shown", android.widget.Toast.LENGTH_SHORT).show()
         } else {
             borderView?.visibility = View.GONE
+            android.widget.Toast.makeText(this, "Region Box Hidden", android.widget.Toast.LENGTH_SHORT).show()
         }
     }
 
-    fun updateStatusUI(isMonitoring: Boolean, isAlarmRinging: Boolean, statusText: String) {
+    fun updateStatusUI(isMonitoring: Boolean, isAlarmRinging: Boolean, statusText: String, ocrPreview: String? = null) {
         floatingBarView?.let { root ->
             val btnToggle = root.findViewById<ImageButton>(R.id.btnFloatingToggle)
             val btnSilence = root.findViewById<ImageButton>(R.id.btnFloatingSilence)
             val tvStatus = root.findViewById<TextView>(R.id.tvFloatingStatus)
+            val tvOcr = root.findViewById<TextView>(R.id.tvFloatingOcrPreview)
 
             btnToggle.setImageResource(if (isMonitoring) R.drawable.ic_stop else R.drawable.ic_play)
             btnSilence.visibility = if (isAlarmRinging) View.VISIBLE else View.GONE
             tvStatus.text = statusText
+            
+            ocrPreview?.let {
+                tvOcr.text = if (it.length > 30) it.substring(0, 27) + "..." else it
+            }
         }
     }
 

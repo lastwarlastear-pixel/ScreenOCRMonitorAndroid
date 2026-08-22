@@ -22,6 +22,7 @@ import androidx.lifecycle.lifecycleScope
 import com.screenocr.monitor.MainActivity
 import com.screenocr.monitor.R
 import com.screenocr.monitor.model.AppConfig
+import com.screenocr.monitor.model.MatchMode
 import com.screenocr.monitor.ocr.MLKitOcrEngine
 import com.screenocr.monitor.ocr.MatchEvaluator
 import com.screenocr.monitor.utils.PreferencesManager
@@ -213,6 +214,7 @@ class ScreenCaptureService : LifecycleService() {
 
         isMonitoring = true
         log("Started monitoring. Target: '${appConfig.preset}' [${appConfig.matchMode.displayName}]", "INFO")
+        android.widget.Toast.makeText(this, "Monitoring Started", android.widget.Toast.LENGTH_SHORT).show()
         updateNotification()
         onStatusChanged?.invoke(true, alarmPlayer.isAlarmRinging)
         OverlayService.instance?.updateStatusUI(true, alarmPlayer.isAlarmRinging, "Monitoring...")
@@ -224,8 +226,13 @@ class ScreenCaptureService : LifecycleService() {
                     val frameBitmap = captureScreenRegion()
                     if (frameBitmap != null) {
                         val ocrText = ocrEngine.recognizeText(frameBitmap)
+                        
+                        // Update floating bar with latest OCR (or clear if empty)
+                        val cleanDisplay = ocrText.replace('\n', ' ').trim()
+                        val previewText = if (cleanDisplay.isBlank()) "Reading..." else cleanDisplay
+                        OverlayService.instance?.updateStatusUI(isMonitoring, alarmPlayer.isAlarmRinging, "Monitoring", previewText)
+
                         if (ocrText.isNotBlank()) {
-                            val cleanDisplay = ocrText.replace('\n', ' ')
                             val disp = if (cleanDisplay.length > 60) cleanDisplay.substring(0, 57) + "..." else cleanDisplay
                             log("OCR: \"$disp\"", "OCR")
 
@@ -238,6 +245,12 @@ class ScreenCaptureService : LifecycleService() {
                             )
 
                             if (matched) {
+                                // For numeric modes, log the numbers found to help user debug
+                                if (appConfig.matchMode in listOf(MatchMode.HIGHER_THAN, MatchMode.LOWER_THAN, MatchMode.EQUAL_TO, MatchMode.HIGHER_OR_EQUAL, MatchMode.LOWER_OR_EQUAL)) {
+                                    val nums = MatchEvaluator.extractNumbers(ocrText)
+                                    log("Numeric Match Triggered! Found: $nums vs Target: ${appConfig.preset}", "INFO")
+                                }
+                                
                                 val now = System.currentTimeMillis()
                                 val cooldownMs = appConfig.cooldownSec * 1000L
                                 val shouldAlert = (!appConfig.alertOnce || ocrText != lastMatchedText) && (now - lastAlertTime > cooldownMs)
@@ -315,6 +328,7 @@ class ScreenCaptureService : LifecycleService() {
         monitoringJob = null
         stopAlarm()
         log("Stopped monitoring.", "INFO")
+        android.widget.Toast.makeText(this, "Monitoring Stopped", android.widget.Toast.LENGTH_SHORT).show()
         updateNotification()
         onStatusChanged?.invoke(false, false)
         OverlayService.instance?.updateStatusUI(false, false, "Stopped")

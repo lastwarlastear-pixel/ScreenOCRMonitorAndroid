@@ -57,15 +57,33 @@
         android:src="@android:drawable/ic_menu_close_clear_cancel"
         android:contentDescription="Exit App" />
 
-    <!-- Status Text -->
-    <TextView
-        android:id="@+id/tvFloatingStatus"
+    <!-- Status and OCR Info -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginEnd="6dp"
-        android:text="Ready"
-        android:textColor="#DDFFFFFF"
-        android:textSize="12sp" />
+        android:layout_marginEnd="8dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvFloatingStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ready"
+            android:textColor="#FFFFFF"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvFloatingOcrPreview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:maxWidth="200dp"
+            android:text="No text yet..."
+            android:textColor="#BBFFFFFF"
+            android:textSize="10sp" />
+    </LinearLayout>
 
 </LinearLayout>

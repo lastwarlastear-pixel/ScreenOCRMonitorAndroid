@@ -17,7 +17,11 @@
     <color name="btn_red_pressed">#C82333</color>
     <color name="btn_orange">#FF9800</color>
     <color name="btn_disabled">#E0E0E0</color>
-    
+
+    <color name="status_ok">#28A745</color>
+    <color name="status_pending">#FFC107</color>
+    <color name="status_error">#DC3545</color>
+
     <color name="overlay_border">#FF3333</color>
     <color name="overlay_bg">#20FF0000</color>
     

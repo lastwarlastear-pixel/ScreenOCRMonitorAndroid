@@ -6,19 +6,6 @@
     android:background="@drawable/bg_overlay_border"
     android:padding="4dp">
 
-    <TextView
-        android:id="@+id/tvRegionInfo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|start"
-        android:background="#D0FF3333"
-        android:paddingHorizontal="6dp"
-        android:paddingVertical="2dp"
-        android:text="OCR REGION"
-        android:textColor="#FFFFFF"
-        android:textSize="10sp"
-        android:textStyle="bold" />
-
     <!-- Corner Resize Handle (Bottom-Right) -->
     <ImageView
         android:id="@+id/resizeHandle"
