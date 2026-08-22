@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">Screen OCR Monitor</string>
+    <string name="screen_region">1. Screen Region</string>
+    <string name="preset_conditions">2. Preset &amp; Match Conditions</string>
+    <string name="settings_alerts">3. Settings &amp; Alerts</string>
+    <string name="realtime_logs">4. Real-time Logs</string>
+    <string name="select_region">🎯 Adjust Region Box</string>
+    <string name="reset_region">🔄 Full Screen</string>
+    <string name="show_border_overlay">Show Region Border Overlay</string>
+    <string name="preset_target_hint">Target text or number (e.g. 100, $50, error)</string>
+    <string name="match_mode">Match Mode:</string>
+    <string name="match_case">Match Case</string>
+    <string name="fuzzy_threshold">Fuzzy Threshold: 80%</string>
+    <string name="interval_sec">Interval (s):</string>
+    <string name="cooldown_sec">Cooldown (s):</string>
+    <string name="sound_alert">Sound Alert</string>
+    <string name="continuous_beep">Beep continuously until stopped</string>
+    <string name="beep_interval">Beep Interval (s):</string>
+    <string name="toast_notification">Push Notifications</string>
+    <string name="alert_once">Only alert once per change</string>
+    <string name="stop_alarm">🔕 STOP ALARM / SILENCE</string>
+    <string name="start_monitoring">▶ START MONITORING</string>
+    <string name="stop_monitoring">⏹ STOP MONITORING</string>
+</resources>
