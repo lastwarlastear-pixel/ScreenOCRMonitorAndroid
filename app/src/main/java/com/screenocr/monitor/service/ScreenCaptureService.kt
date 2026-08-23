@@ -30,7 +30,6 @@ import kotlinx.coroutines.*
 import java.nio.ByteBuffer
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.math.max
 
 class ScreenCaptureService : LifecycleService() {
 
@@ -290,27 +289,39 @@ class ScreenCaptureService : LifecycleService() {
             val pixelStride = planes[0].pixelStride
             val rowStride = planes[0].rowStride
             val rowPadding = rowStride - pixelStride * screenWidth
+            val actualWidth = screenWidth + rowPadding / pixelStride
 
             val fullBitmap = Bitmap.createBitmap(
-                screenWidth + rowPadding / pixelStride,
+                actualWidth,
                 screenHeight,
                 Bitmap.Config.ARGB_8888
             )
             fullBitmap.copyPixelsFromBuffer(buffer)
 
-            val region = appConfig.selectedRegion
-            if (region != null && region.width() > 10 && region.height() > 10) {
-                val safeLeft = max(0, minOf(region.left, screenWidth - 1))
-                val safeTop = max(0, minOf(region.top, screenHeight - 1))
-                val safeWidth = minOf(region.width(), screenWidth - safeLeft)
-                val safeHeight = minOf(region.height(), screenHeight - safeTop)
+            // If border is shown, only capture the selected region
+            if (appConfig.showBorder) {
+                val region = appConfig.selectedRegion
+                if (region != null && region.width() > 10 && region.height() > 10) {
+                    val safeLeft = maxOf(0, minOf(region.left, screenWidth - 1))
+                    val safeTop = maxOf(0, minOf(region.top, screenHeight - 1))
+                    val safeWidth = minOf(region.width(), screenWidth - safeLeft)
+                    val safeHeight = minOf(region.height(), screenHeight - safeTop)
 
-                if (safeWidth > 10 && safeHeight > 10) {
-                    val cropped = Bitmap.createBitmap(fullBitmap, safeLeft, safeTop, safeWidth, safeHeight)
-                    fullBitmap.recycle()
-                    return cropped
+                    if (safeWidth > 10 && safeHeight > 10) {
+                        val cropped = Bitmap.createBitmap(fullBitmap, safeLeft, safeTop, safeWidth, safeHeight)
+                        fullBitmap.recycle()
+                        return cropped
+                    }
                 }
             }
+
+            // If not showing border or region invalid, return the screen (but crop the row padding)
+            if (actualWidth != screenWidth) {
+                val screenOnly = Bitmap.createBitmap(fullBitmap, 0, 0, screenWidth, screenHeight)
+                fullBitmap.recycle()
+                return screenOnly
+            }
+
             return fullBitmap
         } catch (e: Exception) {
             return null
@@ -349,6 +360,8 @@ class ScreenCaptureService : LifecycleService() {
 
     fun updateRegion(rect: Rect?) {
         appConfig.selectedRegion = rect
+        // Also update showBorder based on whether rect is null (optional, but keep it in sync with Overlay logic)
+        appConfig.showBorder = (rect != null)
         log(if (rect != null) "Region updated: (${rect.left},${rect.top}) - ${rect.width()}x${rect.height()}px" else "Region set to Full Screen", "INFO")
     }
 

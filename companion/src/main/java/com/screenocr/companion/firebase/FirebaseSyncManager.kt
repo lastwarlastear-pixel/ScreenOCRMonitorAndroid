@@ -9,6 +9,7 @@ class FirebaseSyncManager private constructor() {
     private val auth = FirebaseAuth.getInstance()
     private val database = FirebaseDatabase.getInstance().reference
     private var configListener: ValueEventListener? = null
+    private var alertsListener: ChildEventListener? = null
     
     var targetDeviceId: String? = null
         private set
@@ -35,13 +36,8 @@ class FirebaseSyncManager private constructor() {
         }
     }
 
-    private var alertsListener: ChildEventListener? = null
-
     fun connectToDevice(deviceId: String, onConfigUpdate: (AppConfig) -> Unit, onAlert: (String) -> Unit) {
-        targetDeviceId?.let { oldId ->
-            configListener?.let { database.child("devices").child(oldId).child("config").removeEventListener(it) }
-            alertsListener?.let { database.child("devices").child(oldId).child("alerts").removeEventListener(it) }
-        }
+        cleanup()
 
         targetDeviceId = deviceId
         val configRef = database.child("devices").child(deviceId).child("config")
@@ -52,25 +48,38 @@ class FirebaseSyncManager private constructor() {
                 val config = snapshot.getValue(AppConfig::class.java)
                 if (config != null) onConfigUpdate(config)
             }
-            override fun onCancelled(error: DatabaseError) {}
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("FirebaseSyncManager", "Config sync cancelled", error.toException())
+            }
         })
 
-        // Listen for new alerts
-        alertsListener = alertsRef.addChildEventListener(object : ChildEventListener {
-            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-                val msg = snapshot.child("message").getValue(String::class.java)
-                if (msg != null) onAlert(msg)
-            }
-            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
-            override fun onChildRemoved(snapshot: DataSnapshot) {}
-            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
-            override fun onCancelled(error: DatabaseError) {}
-        })
+        // Listen for new alerts added since 'now'
+        alertsListener = alertsRef.orderByChild("timestamp").startAt(System.currentTimeMillis().toDouble())
+            .addChildEventListener(object : ChildEventListener {
+                override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+                    val msg = snapshot.child("message").getValue(String::class.java)
+                    if (msg != null) onAlert(msg)
+                }
+                override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
+                override fun onChildRemoved(snapshot: DataSnapshot) {}
+                override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
+                override fun onCancelled(error: DatabaseError) {}
+            })
     }
 
     fun updateRemoteConfig(config: AppConfig) {
         targetDeviceId?.let { deviceId ->
             database.child("devices").child(deviceId).child("config").setValue(config)
         }
+    }
+
+    fun cleanup() {
+        targetDeviceId?.let { oldId ->
+            configListener?.let { database.child("devices").child(oldId).child("config").removeEventListener(it) }
+            alertsListener?.let { database.child("devices").child(oldId).child("alerts").removeEventListener(it) }
+        }
+        configListener = null
+        alertsListener = null
+        targetDeviceId = null
     }
 }

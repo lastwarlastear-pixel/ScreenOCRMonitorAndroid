@@ -248,9 +248,13 @@ class OverlayService : Service() {
     fun toggleBorderVisibility() {
         isBorderVisible = !isBorderVisible
         setBorderVisible(isBorderVisible)
+        
         val config = prefs.loadConfig()
         config.showBorder = isBorderVisible
         prefs.saveConfig(config)
+        
+        // Ensure running service knows about the visibility change
+        ScreenCaptureService.instance?.updateConfig(config)
     }
 
     fun setBorderVisible(visible: Boolean) {

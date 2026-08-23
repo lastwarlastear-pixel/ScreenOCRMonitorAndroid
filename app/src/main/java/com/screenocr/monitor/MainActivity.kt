@@ -264,19 +264,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveConfigFromUI() {
-        config.preset = binding.etPresetTarget.text.toString().trim()
-        config.matchMode = MatchMode.entries[binding.spinnerMatchMode.selectedItemPosition]
-        config.caseSensitive = binding.cbMatchCase.isChecked
-        config.fuzzyThreshold = binding.sliderFuzzy.value.toInt()
-        config.pollInterval = binding.etPollInterval.text.toString().toDoubleOrNull() ?: 1.5
-        config.cooldownSec = binding.etCooldown.text.toString().toIntOrNull() ?: 10
-        config.soundAlert = binding.cbSoundAlert.isChecked
-        config.continuousBeep = binding.cbContinuousBeep.isChecked
-        config.beepInterval = binding.etBeepInterval.text.toString().toDoubleOrNull() ?: 0.8
-        config.toastAlert = binding.cbToastAlert.isChecked
-        config.alertOnce = binding.cbAlertOnce.isChecked
-        config.showBorder = binding.switchShowBorder.isChecked
+        // Load latest to preserve region updated by Overlay
+        val latestConfig = prefs.loadConfig()
+        
+        latestConfig.preset = binding.etPresetTarget.text.toString().trim()
+        latestConfig.matchMode = MatchMode.entries[binding.spinnerMatchMode.selectedItemPosition]
+        latestConfig.caseSensitive = binding.cbMatchCase.isChecked
+        latestConfig.fuzzyThreshold = binding.sliderFuzzy.value.toInt()
+        latestConfig.pollInterval = binding.etPollInterval.text.toString().toDoubleOrNull() ?: 1.5
+        latestConfig.cooldownSec = binding.etCooldown.text.toString().toIntOrNull() ?: 10
+        latestConfig.soundAlert = binding.cbSoundAlert.isChecked
+        latestConfig.continuousBeep = binding.cbContinuousBeep.isChecked
+        latestConfig.beepInterval = binding.etBeepInterval.text.toString().toDoubleOrNull() ?: 0.8
+        latestConfig.toastAlert = binding.cbToastAlert.isChecked
+        latestConfig.alertOnce = binding.cbAlertOnce.isChecked
+        latestConfig.showBorder = binding.switchShowBorder.isChecked
 
+        config = latestConfig
         prefs.saveConfig(config)
         if (::firebaseSyncManager.isInitialized) {
             firebaseSyncManager.pushConfig(config)
