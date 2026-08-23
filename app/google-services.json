@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "217382475497",
+    "project_id": "screenmonitorfirebase",
+    "storage_bucket": "screenmonitorfirebase.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:217382475497:android:8c4b7b227b7146a3358278",
+        "android_client_info": {
+          "package_name": "com.screenocr.companion"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPAncR4OrUzNIgalYqB0TjcDrTnWJDi8U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:217382475497:android:e7d7b493122c27af358278",
+        "android_client_info": {
+          "package_name": "com.screenocr.monitor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBPAncR4OrUzNIgalYqB0TjcDrTnWJDi8U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

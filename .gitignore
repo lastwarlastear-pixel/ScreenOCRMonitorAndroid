@@ -1,3 +1,4 @@
+# Android Studio / IntelliJ
 *.iml
 .gradle
 /local.properties
@@ -13,3 +14,23 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Project specific
+**/build/
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aar
+*.jks
+*.keystore
+
+# Gradle
+.gradle/
+build/
+app/build/
+companion/build/
+
+# Google Services (keeping as template, user added real ones)
+# app/google-services.json
+# companion/google-services.json
