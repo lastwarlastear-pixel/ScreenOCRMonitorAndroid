@@ -19,6 +19,9 @@
     <color name="overlay_border">#FF3333</color>
     <color name="primary">#1976D2</color>
     <color name="primary_dark">#0D47A1</color>
+    <color name="status_error">#DC3545</color>
+    <color name="status_ok">#28A745</color>
+    <color name="status_pending">#FFC107</color>
     <color name="surface">#FFFFFF</color>
     <color name="text_primary">#1A1D20</color>
     <color name="text_secondary">#606770</color>

@@ -18,3 +18,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "ScreenOCRMonitor"
 include(":app")
+include(":companion")

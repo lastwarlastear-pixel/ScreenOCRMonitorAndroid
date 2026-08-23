@@ -36,18 +36,23 @@ public final class OverlayFloatingControlsBinding implements ViewBinding {
   public final LinearLayout floatingBarRoot;
 
   @NonNull
+  public final TextView tvFloatingOcrPreview;
+
+  @NonNull
   public final TextView tvFloatingStatus;
 
   private OverlayFloatingControlsBinding(@NonNull LinearLayout rootView,
       @NonNull ImageButton btnFloatingCrop, @NonNull ImageButton btnFloatingExit,
       @NonNull ImageButton btnFloatingSilence, @NonNull ImageButton btnFloatingToggle,
-      @NonNull LinearLayout floatingBarRoot, @NonNull TextView tvFloatingStatus) {
+      @NonNull LinearLayout floatingBarRoot, @NonNull TextView tvFloatingOcrPreview,
+      @NonNull TextView tvFloatingStatus) {
     this.rootView = rootView;
     this.btnFloatingCrop = btnFloatingCrop;
     this.btnFloatingExit = btnFloatingExit;
     this.btnFloatingSilence = btnFloatingSilence;
     this.btnFloatingToggle = btnFloatingToggle;
     this.floatingBarRoot = floatingBarRoot;
+    this.tvFloatingOcrPreview = tvFloatingOcrPreview;
     this.tvFloatingStatus = tvFloatingStatus;
   }
 
@@ -104,6 +109,12 @@ public final class OverlayFloatingControlsBinding implements ViewBinding {
 
       LinearLayout floatingBarRoot = (LinearLayout) rootView;
 
+      id = R.id.tvFloatingOcrPreview;
+      TextView tvFloatingOcrPreview = ViewBindings.findChildViewById(rootView, id);
+      if (tvFloatingOcrPreview == null) {
+        break missingId;
+      }
+
       id = R.id.tvFloatingStatus;
       TextView tvFloatingStatus = ViewBindings.findChildViewById(rootView, id);
       if (tvFloatingStatus == null) {
@@ -112,7 +123,7 @@ public final class OverlayFloatingControlsBinding implements ViewBinding {
 
       return new OverlayFloatingControlsBinding((LinearLayout) rootView, btnFloatingCrop,
           btnFloatingExit, btnFloatingSilence, btnFloatingToggle, floatingBarRoot,
-          tvFloatingStatus);
+          tvFloatingOcrPreview, tvFloatingStatus);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

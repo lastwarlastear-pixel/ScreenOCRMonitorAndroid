@@ -2142,6 +2142,9 @@ color secondary_text_default_material_dark
 color secondary_text_default_material_light
 color secondary_text_disabled_material_dark
 color secondary_text_disabled_material_light
+color status_error
+color status_ok
+color status_pending
 color surface
 color switch_thumb_disabled_material_dark
 color switch_thumb_disabled_material_light
@@ -3284,6 +3287,7 @@ id btnFloatingCrop
 id btnFloatingExit
 id btnFloatingSilence
 id btnFloatingToggle
+id btnGrantPermissions
 id btnResetRegion
 id btnSelectArea
 id btnStopAlarm
@@ -3292,6 +3296,10 @@ id buttonPanel
 id cache_measures
 id callMeasure
 id cancel_button
+id cardStep1
+id cardStep2
+id cardStep3
+id cardStep4
 id carryVelocity
 id cbAlertOnce
 id cbContinuousBeep
@@ -3687,11 +3695,15 @@ id transition_position
 id transition_scene_layoutid_cache
 id transition_transform
 id triangle
+id tvFloatingOcrPreview
 id tvFloatingStatus
 id tvFuzzyThreshold
 id tvLogs
-id tvRegionInfo
 id tvRegionStatus
+id tvStep1Status
+id tvStep2Status
+id tvStep3Status
+id tvStep4Status
 id unchecked
 id uniform
 id unlabeled

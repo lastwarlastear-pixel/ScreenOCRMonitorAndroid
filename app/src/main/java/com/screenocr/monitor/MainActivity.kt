@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import com.screenocr.monitor.databinding.ActivityMainBinding
+import com.screenocr.monitor.firebase.FirebaseSyncManager
 import com.screenocr.monitor.model.AppConfig
 import com.screenocr.monitor.model.MatchMode
 import com.screenocr.monitor.service.OverlayService
@@ -29,6 +30,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var prefs: PreferencesManager
+    private lateinit var firebaseSyncManager: FirebaseSyncManager
     private var config = AppConfig()
 
     private val logBuilder = SpannableStringBuilder()
@@ -65,6 +67,21 @@ class MainActivity : AppCompatActivity() {
 
         prefs = PreferencesManager(this)
         config = prefs.loadConfig()
+
+        firebaseSyncManager = FirebaseSyncManager.getInstance(this)
+        firebaseSyncManager.onConfigUpdated = { newConfig ->
+            runOnUiThread {
+                config = newConfig
+                loadConfigToUI()
+                ScreenCaptureService.instance?.updateConfig(newConfig)
+            }
+        }
+        firebaseSyncManager.initialize { uid ->
+            runOnUiThread {
+                binding.tvMainUid.text = "Device UID: $uid"
+                loadConfigToUI()
+            }
+        }
 
         setupUI()
         setupListeners()
@@ -261,6 +278,9 @@ class MainActivity : AppCompatActivity() {
         config.showBorder = binding.switchShowBorder.isChecked
 
         prefs.saveConfig(config)
+        if (::firebaseSyncManager.isInitialized) {
+            firebaseSyncManager.pushConfig(config)
+        }
         ScreenCaptureService.instance?.updateConfig(config)
     }
 
@@ -340,6 +360,15 @@ class MainActivity : AppCompatActivity() {
             "INFO" -> ContextCompat.getColor(this, R.color.log_info)
             "ERROR" -> ContextCompat.getColor(this, R.color.log_error)
             else -> ContextCompat.getColor(this, R.color.log_text)
+        }
+
+        // Cap logs at 50 lines to prevent memory bloat
+        val lines = logBuilder.toString().split("\n")
+        if (lines.size > 50) {
+            logBuilder.clear()
+            lines.takeLast(50).forEach { line ->
+                if (line.isNotBlank()) logBuilder.append(line).append("\n")
+            }
         }
 
         val start = logBuilder.length

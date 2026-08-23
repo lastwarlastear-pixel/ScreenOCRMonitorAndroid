@@ -14,6 +14,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.checkbox.MaterialCheckBox;
 import com.google.android.material.slider.Slider;
 import com.google.android.material.switchmaterial.SwitchMaterial;
@@ -34,6 +35,9 @@ public final class ActivityMainBinding implements ViewBinding {
   public final MaterialButton btnExitApp;
 
   @NonNull
+  public final MaterialButton btnGrantPermissions;
+
+  @NonNull
   public final MaterialButton btnResetRegion;
 
   @NonNull
@@ -44,6 +48,18 @@ public final class ActivityMainBinding implements ViewBinding {
 
   @NonNull
   public final MaterialButton btnToggleMonitoring;
+
+  @NonNull
+  public final MaterialCardView cardStep1;
+
+  @NonNull
+  public final MaterialCardView cardStep2;
+
+  @NonNull
+  public final MaterialCardView cardStep3;
+
+  @NonNull
+  public final MaterialCardView cardStep4;
 
   @NonNull
   public final MaterialCheckBox cbAlertOnce;
@@ -96,25 +112,47 @@ public final class ActivityMainBinding implements ViewBinding {
   @NonNull
   public final TextView tvRegionStatus;
 
+  @NonNull
+  public final TextView tvStep1Status;
+
+  @NonNull
+  public final TextView tvStep2Status;
+
+  @NonNull
+  public final TextView tvStep3Status;
+
+  @NonNull
+  public final TextView tvStep4Status;
+
   private ActivityMainBinding(@NonNull CoordinatorLayout rootView, @NonNull TextView btnClearLogs,
-      @NonNull MaterialButton btnExitApp, @NonNull MaterialButton btnResetRegion,
-      @NonNull MaterialButton btnSelectArea, @NonNull MaterialButton btnStopAlarm,
-      @NonNull MaterialButton btnToggleMonitoring, @NonNull MaterialCheckBox cbAlertOnce,
-      @NonNull MaterialCheckBox cbContinuousBeep, @NonNull MaterialCheckBox cbMatchCase,
-      @NonNull MaterialCheckBox cbSoundAlert, @NonNull MaterialCheckBox cbToastAlert,
-      @NonNull TextInputEditText etBeepInterval, @NonNull TextInputEditText etCooldown,
-      @NonNull TextInputEditText etPollInterval, @NonNull TextInputEditText etPresetTarget,
-      @NonNull LinearLayout layoutFuzzy, @NonNull ScrollView scrollLogs,
-      @NonNull Slider sliderFuzzy, @NonNull Spinner spinnerMatchMode,
-      @NonNull SwitchMaterial switchShowBorder, @NonNull TextView tvFuzzyThreshold,
-      @NonNull TextView tvLogs, @NonNull TextView tvRegionStatus) {
+      @NonNull MaterialButton btnExitApp, @NonNull MaterialButton btnGrantPermissions,
+      @NonNull MaterialButton btnResetRegion, @NonNull MaterialButton btnSelectArea,
+      @NonNull MaterialButton btnStopAlarm, @NonNull MaterialButton btnToggleMonitoring,
+      @NonNull MaterialCardView cardStep1, @NonNull MaterialCardView cardStep2,
+      @NonNull MaterialCardView cardStep3, @NonNull MaterialCardView cardStep4,
+      @NonNull MaterialCheckBox cbAlertOnce, @NonNull MaterialCheckBox cbContinuousBeep,
+      @NonNull MaterialCheckBox cbMatchCase, @NonNull MaterialCheckBox cbSoundAlert,
+      @NonNull MaterialCheckBox cbToastAlert, @NonNull TextInputEditText etBeepInterval,
+      @NonNull TextInputEditText etCooldown, @NonNull TextInputEditText etPollInterval,
+      @NonNull TextInputEditText etPresetTarget, @NonNull LinearLayout layoutFuzzy,
+      @NonNull ScrollView scrollLogs, @NonNull Slider sliderFuzzy,
+      @NonNull Spinner spinnerMatchMode, @NonNull SwitchMaterial switchShowBorder,
+      @NonNull TextView tvFuzzyThreshold, @NonNull TextView tvLogs,
+      @NonNull TextView tvRegionStatus, @NonNull TextView tvStep1Status,
+      @NonNull TextView tvStep2Status, @NonNull TextView tvStep3Status,
+      @NonNull TextView tvStep4Status) {
     this.rootView = rootView;
     this.btnClearLogs = btnClearLogs;
     this.btnExitApp = btnExitApp;
+    this.btnGrantPermissions = btnGrantPermissions;
     this.btnResetRegion = btnResetRegion;
     this.btnSelectArea = btnSelectArea;
     this.btnStopAlarm = btnStopAlarm;
     this.btnToggleMonitoring = btnToggleMonitoring;
+    this.cardStep1 = cardStep1;
+    this.cardStep2 = cardStep2;
+    this.cardStep3 = cardStep3;
+    this.cardStep4 = cardStep4;
     this.cbAlertOnce = cbAlertOnce;
     this.cbContinuousBeep = cbContinuousBeep;
     this.cbMatchCase = cbMatchCase;
@@ -132,6 +170,10 @@ public final class ActivityMainBinding implements ViewBinding {
     this.tvFuzzyThreshold = tvFuzzyThreshold;
     this.tvLogs = tvLogs;
     this.tvRegionStatus = tvRegionStatus;
+    this.tvStep1Status = tvStep1Status;
+    this.tvStep2Status = tvStep2Status;
+    this.tvStep3Status = tvStep3Status;
+    this.tvStep4Status = tvStep4Status;
   }
 
   @Override
@@ -173,6 +215,12 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.btnGrantPermissions;
+      MaterialButton btnGrantPermissions = ViewBindings.findChildViewById(rootView, id);
+      if (btnGrantPermissions == null) {
+        break missingId;
+      }
+
       id = R.id.btnResetRegion;
       MaterialButton btnResetRegion = ViewBindings.findChildViewById(rootView, id);
       if (btnResetRegion == null) {
@@ -194,6 +242,30 @@ public final class ActivityMainBinding implements ViewBinding {
       id = R.id.btnToggleMonitoring;
       MaterialButton btnToggleMonitoring = ViewBindings.findChildViewById(rootView, id);
       if (btnToggleMonitoring == null) {
+        break missingId;
+      }
+
+      id = R.id.cardStep1;
+      MaterialCardView cardStep1 = ViewBindings.findChildViewById(rootView, id);
+      if (cardStep1 == null) {
+        break missingId;
+      }
+
+      id = R.id.cardStep2;
+      MaterialCardView cardStep2 = ViewBindings.findChildViewById(rootView, id);
+      if (cardStep2 == null) {
+        break missingId;
+      }
+
+      id = R.id.cardStep3;
+      MaterialCardView cardStep3 = ViewBindings.findChildViewById(rootView, id);
+      if (cardStep3 == null) {
+        break missingId;
+      }
+
+      id = R.id.cardStep4;
+      MaterialCardView cardStep4 = ViewBindings.findChildViewById(rootView, id);
+      if (cardStep4 == null) {
         break missingId;
       }
 
@@ -299,11 +371,37 @@ public final class ActivityMainBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.tvStep1Status;
+      TextView tvStep1Status = ViewBindings.findChildViewById(rootView, id);
+      if (tvStep1Status == null) {
+        break missingId;
+      }
+
+      id = R.id.tvStep2Status;
+      TextView tvStep2Status = ViewBindings.findChildViewById(rootView, id);
+      if (tvStep2Status == null) {
+        break missingId;
+      }
+
+      id = R.id.tvStep3Status;
+      TextView tvStep3Status = ViewBindings.findChildViewById(rootView, id);
+      if (tvStep3Status == null) {
+        break missingId;
+      }
+
+      id = R.id.tvStep4Status;
+      TextView tvStep4Status = ViewBindings.findChildViewById(rootView, id);
+      if (tvStep4Status == null) {
+        break missingId;
+      }
+
       return new ActivityMainBinding((CoordinatorLayout) rootView, btnClearLogs, btnExitApp,
-          btnResetRegion, btnSelectArea, btnStopAlarm, btnToggleMonitoring, cbAlertOnce,
-          cbContinuousBeep, cbMatchCase, cbSoundAlert, cbToastAlert, etBeepInterval, etCooldown,
-          etPollInterval, etPresetTarget, layoutFuzzy, scrollLogs, sliderFuzzy, spinnerMatchMode,
-          switchShowBorder, tvFuzzyThreshold, tvLogs, tvRegionStatus);
+          btnGrantPermissions, btnResetRegion, btnSelectArea, btnStopAlarm, btnToggleMonitoring,
+          cardStep1, cardStep2, cardStep3, cardStep4, cbAlertOnce, cbContinuousBeep, cbMatchCase,
+          cbSoundAlert, cbToastAlert, etBeepInterval, etCooldown, etPollInterval, etPresetTarget,
+          layoutFuzzy, scrollLogs, sliderFuzzy, spinnerMatchMode, switchShowBorder,
+          tvFuzzyThreshold, tvLogs, tvRegionStatus, tvStep1Status, tvStep2Status, tvStep3Status,
+          tvStep4Status);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

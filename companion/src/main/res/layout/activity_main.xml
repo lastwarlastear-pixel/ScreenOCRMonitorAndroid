@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="OCR Companion"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/etTargetUid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Main App Device UID"
+        android:layout_marginTop="16dp" />
+
+    <Button
+        android:id="@+id/btnConnect"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Connect to Device" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#CCCCCC"
+        android:layout_marginVertical="16dp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:id="@+id/layoutSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Remote Configuration"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/etRemotePreset"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Target Text"
+                android:inputType="text" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Interval (seconds):" />
+            <EditText
+                android:id="@+id/etRemoteInterval"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="e.g. 1.5"
+                android:inputType="numberDecimal" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Cooldown (seconds):" />
+            <EditText
+                android:id="@+id/etRemoteCooldown"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="e.g. 10"
+                android:inputType="number" />
+
+            <CheckBox
+                android:id="@+id/cbRemoteSound"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Enable Sound Alert" />
+
+            <CheckBox
+                android:id="@+id/cbRemoteContinuous"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Continuous Beep" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Beep Interval:" />
+            <EditText
+                android:id="@+id/etRemoteBeepInterval"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="e.g. 0.8"
+                android:inputType="numberDecimal" />
+
+            <Button
+                android:id="@+id/btnSaveRemote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Update Main App Config"
+                android:layout_marginTop="16dp" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

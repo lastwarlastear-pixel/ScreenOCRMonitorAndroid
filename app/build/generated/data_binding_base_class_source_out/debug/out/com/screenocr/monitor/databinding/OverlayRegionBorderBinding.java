@@ -6,7 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.viewbinding.ViewBinding;
@@ -26,16 +25,11 @@ public final class OverlayRegionBorderBinding implements ViewBinding {
   @NonNull
   public final ImageView resizeHandle;
 
-  @NonNull
-  public final TextView tvRegionInfo;
-
   private OverlayRegionBorderBinding(@NonNull FrameLayout rootView,
-      @NonNull FrameLayout borderContainer, @NonNull ImageView resizeHandle,
-      @NonNull TextView tvRegionInfo) {
+      @NonNull FrameLayout borderContainer, @NonNull ImageView resizeHandle) {
     this.rootView = rootView;
     this.borderContainer = borderContainer;
     this.resizeHandle = resizeHandle;
-    this.tvRegionInfo = tvRegionInfo;
   }
 
   @Override
@@ -73,14 +67,7 @@ public final class OverlayRegionBorderBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.tvRegionInfo;
-      TextView tvRegionInfo = ViewBindings.findChildViewById(rootView, id);
-      if (tvRegionInfo == null) {
-        break missingId;
-      }
-
-      return new OverlayRegionBorderBinding((FrameLayout) rootView, borderContainer, resizeHandle,
-          tvRegionInfo);
+      return new OverlayRegionBorderBinding((FrameLayout) rootView, borderContainer, resizeHandle);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

@@ -225,43 +225,47 @@ class ScreenCaptureService : LifecycleService() {
                 try {
                     val frameBitmap = captureScreenRegion()
                     if (frameBitmap != null) {
-                        val ocrText = ocrEngine.recognizeText(frameBitmap)
-                        
-                        // Update floating bar with latest OCR (or clear if empty)
-                        val cleanDisplay = ocrText.replace('\n', ' ').trim()
-                        val previewText = if (cleanDisplay.isBlank()) "Reading..." else cleanDisplay
-                        OverlayService.instance?.updateStatusUI(isMonitoring, alarmPlayer.isAlarmRinging, "Monitoring", previewText)
+                        try {
+                            val ocrText = ocrEngine.recognizeText(frameBitmap)
+                            
+                            // Update floating bar with latest OCR (or clear if empty)
+                            val cleanDisplay = ocrText.replace('\n', ' ').trim()
+                            val previewText = if (cleanDisplay.isBlank()) "Reading..." else cleanDisplay
+                            OverlayService.instance?.updateStatusUI(isMonitoring, alarmPlayer.isAlarmRinging, "Monitoring", previewText)
 
-                        if (ocrText.isNotBlank()) {
-                            val disp = if (cleanDisplay.length > 60) cleanDisplay.substring(0, 57) + "..." else cleanDisplay
-                            log("OCR: \"$disp\"", "OCR")
+                            if (ocrText.isNotBlank()) {
+                                val disp = if (cleanDisplay.length > 60) cleanDisplay.substring(0, 57) + "..." else cleanDisplay
+                                log("OCR: \"$disp\"", "OCR")
 
-                            val matched = MatchEvaluator.evaluateMatch(
-                                text = ocrText,
-                                preset = appConfig.preset,
-                                mode = appConfig.matchMode,
-                                caseSensitive = appConfig.caseSensitive,
-                                fuzzyThreshold = appConfig.fuzzyThreshold
-                            )
+                                val matched = MatchEvaluator.evaluateMatch(
+                                    text = ocrText,
+                                    preset = appConfig.preset,
+                                    mode = appConfig.matchMode,
+                                    caseSensitive = appConfig.caseSensitive,
+                                    fuzzyThreshold = appConfig.fuzzyThreshold
+                                )
 
-                            if (matched) {
-                                // For numeric modes, log the numbers found to help user debug
-                                if (appConfig.matchMode in listOf(MatchMode.HIGHER_THAN, MatchMode.LOWER_THAN, MatchMode.EQUAL_TO, MatchMode.HIGHER_OR_EQUAL, MatchMode.LOWER_OR_EQUAL)) {
-                                    val nums = MatchEvaluator.extractNumbers(ocrText)
-                                    log("Numeric Match Triggered! Found: $nums vs Target: ${appConfig.preset}", "INFO")
-                                }
-                                
-                                val now = System.currentTimeMillis()
-                                val cooldownMs = appConfig.cooldownSec * 1000L
-                                val shouldAlert = (!appConfig.alertOnce || ocrText != lastMatchedText) && (now - lastAlertTime > cooldownMs)
+                                if (matched) {
+                                    // For numeric modes, log the numbers found to help user debug
+                                    if (appConfig.matchMode in listOf(MatchMode.HIGHER_THAN, MatchMode.LOWER_THAN, MatchMode.EQUAL_TO, MatchMode.HIGHER_OR_EQUAL, MatchMode.LOWER_OR_EQUAL)) {
+                                        val nums = MatchEvaluator.extractNumbers(ocrText)
+                                        log("Numeric Match Triggered! Found: $nums vs Target: ${appConfig.preset}", "INFO")
+                                    }
+                                    
+                                    val now = System.currentTimeMillis()
+                                    val cooldownMs = appConfig.cooldownSec * 1000L
+                                    val shouldAlert = (!appConfig.alertOnce || ocrText != lastMatchedText) && (now - lastAlertTime > cooldownMs)
 
-                                if (shouldAlert) {
-                                    lastMatchedText = ocrText
-                                    lastAlertTime = now
-                                    log("💥 MATCH DETECTED [${appConfig.matchMode.displayName}]: '${appConfig.preset}' found in \"$disp\"", "MATCH")
-                                    triggerMatchAlert()
+                                    if (shouldAlert) {
+                                        lastMatchedText = ocrText
+                                        lastAlertTime = now
+                                        log("💥 MATCH DETECTED [${appConfig.matchMode.displayName}]: '${appConfig.preset}' found in \"$disp\"", "MATCH")
+                                        triggerMatchAlert()
+                                    }
                                 }
                             }
+                        } finally {
+                            frameBitmap.recycle()
                         }
                     }
                 } catch (e: Exception) {
@@ -319,6 +323,7 @@ class ScreenCaptureService : LifecycleService() {
         if (appConfig.soundAlert) {
             alarmPlayer.triggerAlarm(appConfig.continuousBeep, appConfig.beepInterval)
         }
+        com.screenocr.monitor.firebase.FirebaseSyncManager.getInstance(this).pushAlert("Target matched: ${appConfig.preset}")
     }
 
     fun stopMonitoring() {
