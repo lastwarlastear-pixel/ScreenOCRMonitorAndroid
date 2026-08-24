@@ -1,43 +1,45 @@
-# Implementation Plan - Companion App Rewrite
+# Implementation Plan - Complete Rewrite and Robust Region OCR
 
-Complete rewrite of the companion app to provide a reliable, background-capable remote monitor and controller for the main Screen OCR Monitor app.
+This plan addresses the issue where OCR results leak outside the selected region over time and implements full persistence for both apps.
+
+## User Review Required
+
+> [!IMPORTANT]
+> The "Complete Rewrite" will focus on refactoring the core logic for robustness while maintaining the current feature set. Existing Firebase connections will remain compatible.
 
 ## Proposed Changes
 
-### [Companion App]
+### [Main App] - OCR Region Robustness & Persistence
+
+#### [MODIFY] [ScreenCaptureService.kt](file:///C:/Users/imran/screen_ocr_monitor/android_app/app/src/main/java/com/screenocr/monitor/service/ScreenCaptureService.kt)
+- **Dynamic Display Handling**: Implement a `DisplayListener` to detect screen rotation or resolution changes. Re-initialize `VirtualDisplay` and `ImageReader` on changes to prevent coordinate drift.
+- **Strict Region Cropping**: Refine `captureScreenRegion()` to ensure the crop is always relative to the current image buffer's actual dimensions.
+- **State Management**: Clearer lifecycle for `MediaProjection` and `ImageReader`.
+
+#### [MODIFY] [MainActivity.kt](file:///C:/Users/imran/screen_ocr_monitor/android_app/app/src/main/java/com/screenocr/monitor/MainActivity.kt)
+- **State Restoration**: Ensure all UI fields (presets, modes, intervals) are loaded in `onCreate` and saved on every change.
+- **Service Interaction**: Improve how the app communicates with the running service to ensure they always use the same `AppConfig`.
+
+#### [MODIFY] [OverlayService.kt](file:///C:/Users/imran/screen_ocr_monitor/android_app/app/src/main/java/com/screenocr/monitor/service/OverlayService.kt)
+- **Precise Bounds**: Ensure the overlay box coordinates are perfectly mapped to the screen pixels.
+- **Auto-Save**: Ensure region changes are immediately persisted and pushed to the service.
+
+#### [MODIFY] [PreferencesManager.kt](file:///C:/Users/imran/screen_ocr_monitor/android_app/app/src/main/java/com/screenocr/monitor/utils/PreferencesManager.kt)
+- Add methods to save/load individual fields or the entire `AppConfig` more efficiently.
+
+### [Companion App] - Full Persistence
 
 #### [MODIFY] [MainActivity.kt](file:///C:/Users/imran/screen_ocr_monitor/android_app/companion/src/main/java/com/screenocr/companion/MainActivity.kt)
-- Redesign UI to include:
-    - Connection management (UID persistence, Start/Stop monitoring).
-    - Sound Picker for local alarm.
-    - Remote Configuration panel (Preset text, Mode, Interval, Cooldown, etc.).
-- Orchestrate `AlertListenerService` lifecycle.
-
-#### [MODIFY] [activity_main.xml](file:///C:/Users/imran/screen_ocr_monitor/android_app/companion/src/main/res/layout/activity_main.xml)
-- Completely rebuild layout using `ScrollView` and `CardView` for a clean, organized look.
-- Sections: Connection, Local Alert Config, Remote Main App Config.
-
-#### [MODIFY] [FirebaseSyncManager.kt](file:///C:/Users/imran/screen_ocr_monitor/android_app/companion/src/main/java/com/screenocr/companion/firebase/FirebaseSyncManager.kt)
-- Update to support targeted connection to a main device's UID.
-- Methods for updating remote config and listening for alerts.
-
-#### [MODIFY] [AlertListenerService.kt](file:///C:/Users/imran/screen_ocr_monitor/android_app/companion/src/main/java/com/screenocr/companion/service/AlertListenerService.kt)
-- Robust Foreground Service implementation.
-- Real-time Firebase alert listener.
-- `MediaPlayer` management for persistent alarm playback.
-- `WakeLock` and `WifiLock` (if needed) for reliability when screen is off.
-
-#### [MODIFY] [AndroidManifest.xml](file:///C:/Users/imran/screen_ocr_monitor/android_app/companion/src/main/AndroidManifest.xml)
-- Ensure all permissions for foreground services, wake locks, and notifications are present.
+- **Auto-Save/Load**: Save the `target_uid`, `alert_sound_uri`, and even the last synced `AppConfig` to `SharedPreferences`.
+- **UI Recovery**: On launch, restore the connection state if it was previously active.
 
 ## Verification Plan
 
 ### Automated Tests
-- N/A (Manual UI and logic verification preferred for hardware-dependent features like background sound).
+- Build verification for both modules.
 
 ### Manual Verification
-1. **Connection**: Enter main app UID, click connect. Verify "Synced" status.
-2. **Remote Config**: Change "Target Text" in companion. Verify it updates in main app UI/logs.
-3. **Sound Picker**: Select a custom audio file. Test playback.
-4. **Detection Alarm**: Trigger a match on main app. Verify companion plays sound immediately.
-5. **Background/Screen Off**: Close companion app (leave service running) and turn off screen. Trigger alert. Verify alarm plays loudly.
+1. **Region Accuracy**: Select a region, verify OCR results. Rotate screen, verify results stay within the box.
+2. **Persistence (Main)**: Change settings, kill app, restart. Verify settings are restored.
+3. **Persistence (Companion)**: Enter UID, select sound, kill app, restart. Verify UID and sound are restored.
+4. **Background Monitoring**: Verify background OCR and alarm still work as expected.

@@ -84,9 +84,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         setupUI()
-        setupListeners()
         loadConfigToUI()
+        setupListeners()
         updateStepStatus()
+
+        // Auto-show overlay if it was previously shown
+        if (Settings.canDrawOverlays(this) && config.showBorder) {
+            startOverlayService()
+        }
     }
 
     private fun setupUI() {
@@ -122,10 +127,12 @@ class MainActivity : AppCompatActivity() {
 
         binding.switchShowBorder.setOnCheckedChangeListener { _, isChecked ->
             OverlayService.instance?.setBorderVisible(isChecked)
+            saveConfigFromUI()
         }
 
         // Step 3: Target Text
         binding.etPresetTarget.addTextChangedListener {
+            saveConfigFromUI()
             updateStepStatus()
         }
 
@@ -134,6 +141,7 @@ class MainActivity : AppCompatActivity() {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedMode = MatchMode.entries[position]
                 binding.layoutFuzzy.visibility = if (selectedMode == MatchMode.FUZZY_SIMILARITY) View.VISIBLE else View.GONE
+                saveConfigFromUI()
             }
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
@@ -141,7 +149,20 @@ class MainActivity : AppCompatActivity() {
         // Fuzzy Slider
         binding.sliderFuzzy.addOnChangeListener { _, value, _ ->
             binding.tvFuzzyThreshold.text = "Fuzzy Threshold: ${value.toInt()}%"
+            saveConfigFromUI()
         }
+
+        // Interval & Cooldown
+        binding.etPollInterval.addTextChangedListener { saveConfigFromUI() }
+        binding.etCooldown.addTextChangedListener { saveConfigFromUI() }
+        binding.etBeepInterval.addTextChangedListener { saveConfigFromUI() }
+
+        // Toggles
+        binding.cbMatchCase.setOnCheckedChangeListener { _, _ -> saveConfigFromUI() }
+        binding.cbSoundAlert.setOnCheckedChangeListener { _, _ -> saveConfigFromUI() }
+        binding.cbContinuousBeep.setOnCheckedChangeListener { _, _ -> saveConfigFromUI() }
+        binding.cbToastAlert.setOnCheckedChangeListener { _, _ -> saveConfigFromUI() }
+        binding.cbAlertOnce.setOnCheckedChangeListener { _, _ -> saveConfigFromUI() }
 
         // Step 4: Toggle Monitoring
         binding.btnToggleMonitoring.setOnClickListener {

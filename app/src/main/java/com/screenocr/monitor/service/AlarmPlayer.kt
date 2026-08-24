@@ -30,9 +30,11 @@ class AlarmPlayer(private val context: Context) {
 
     private fun playBeepTone() {
         try {
-            toneGenerator?.startTone(ToneGenerator.TONE_CDMA_ALERT_NETWORK_LITE, 350)
+            // Main app is now silent (no sound or vibration)
+            // toneGenerator?.startTone(ToneGenerator.TONE_CDMA_ALERT_NETWORK_LITE, 350)
             
-            // Also trigger short haptic vibration
+            /* 
+            // VIBRATION REMOVED as requested
             val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator?.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE))
@@ -40,6 +42,7 @@ class AlarmPlayer(private val context: Context) {
                 @Suppress("DEPRECATION")
                 vibrator?.vibrate(200)
             }
+            */
         } catch (e: Exception) {
             // ignore
         }

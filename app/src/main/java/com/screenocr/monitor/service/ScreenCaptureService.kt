@@ -15,7 +15,12 @@ import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
+import android.util.DisplayMetrics
+import android.view.Display
+import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
@@ -37,6 +42,8 @@ class ScreenCaptureService : LifecycleService() {
     private var mediaProjection: MediaProjection? = null
     private var virtualDisplay: VirtualDisplay? = null
     private var imageReader: ImageReader? = null
+    private var projectionResultCode: Int = Activity.RESULT_CANCELED
+    private var projectionData: Intent? = null
 
     private lateinit var prefs: PreferencesManager
     private lateinit var alarmPlayer: AlarmPlayer
@@ -45,6 +52,26 @@ class ScreenCaptureService : LifecycleService() {
     private var screenWidth = 1080
     private var screenHeight = 2400
     private var screenDensity = 400
+
+    private val displayListener = object : DisplayManager.DisplayListener {
+        override fun onDisplayAdded(displayId: Int) {}
+        override fun onDisplayRemoved(displayId: Int) {}
+        override fun onDisplayChanged(displayId: Int) {
+            if (isMonitoring) {
+                val oldW = screenWidth
+                val oldH = screenHeight
+                val oldD = screenDensity
+                
+                updateScreenDimensions()
+                
+                // Only re-init if dimensions or density actually changed to avoid infinite loop
+                if (screenWidth != oldW || screenHeight != oldH || screenDensity != oldD) {
+                    log("Display dimensions changed, re-initializing virtual display...", "INFO")
+                    reinitVirtualDisplay()
+                }
+            }
+        }
+    }
 
     @Volatile var isMonitoring = false
         private set
@@ -78,19 +105,51 @@ class ScreenCaptureService : LifecycleService() {
         alarmPlayer = AlarmPlayer(this)
 
         alarmPlayer.onAlarmStateChanged = { ringing ->
-            updateNotification()
-            onStatusChanged?.invoke(isMonitoring, ringing)
-            OverlayService.instance?.updateStatusUI(isMonitoring, ringing, if (ringing) "ALARM RINGING" else (if (isMonitoring) "Monitoring" else "Stopped"))
+            lifecycleScope.launch(Dispatchers.Main) {
+                updateNotification()
+                onStatusChanged?.invoke(isMonitoring, ringing)
+                OverlayService.instance?.updateStatusUI(isMonitoring, ringing, if (ringing) "ALARM RINGING" else (if (isMonitoring) "Monitoring" else "Stopped"))
+            }
         }
 
         mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+        updateScreenDimensions()
 
-        val metrics = resources.displayMetrics
+        val displayManager = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        displayManager.registerDisplayListener(displayListener, Handler(Looper.getMainLooper()))
+
+        createNotificationChannel()
+    }
+
+    private fun updateScreenDimensions() {
+        val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        val metrics = DisplayMetrics()
+        @Suppress("DEPRECATION")
+        windowManager.defaultDisplay.getRealMetrics(metrics)
+        
         screenWidth = metrics.widthPixels
         screenHeight = metrics.heightPixels
         screenDensity = metrics.densityDpi
+        log("Updated dimensions: $screenWidth x $screenHeight ($screenDensity dpi)", "INFO")
+    }
 
-        createNotificationChannel()
+    private fun reinitVirtualDisplay() {
+        synchronized(this) {
+            try {
+                virtualDisplay?.release()
+                imageReader?.close()
+                virtualDisplay = null
+                imageReader = null
+                
+                val resultCode = projectionResultCode
+                val data = projectionData
+                if (resultCode == Activity.RESULT_OK && data != null) {
+                    initMediaProjection(resultCode, data)
+                }
+            } catch (e: Exception) {
+                log("Re-init error: ${e.message}", "ERROR")
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -98,17 +157,17 @@ class ScreenCaptureService : LifecycleService() {
 
         when (intent?.action) {
             ACTION_START -> {
-                val resultCode = intent.getIntExtra(EXTRA_RESULT_CODE, Activity.RESULT_CANCELED)
-                val data = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                projectionResultCode = intent.getIntExtra(EXTRA_RESULT_CODE, Activity.RESULT_CANCELED)
+                projectionData = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     intent.getParcelableExtra(EXTRA_DATA, Intent::class.java)
                 } else {
                     @Suppress("DEPRECATION")
                     intent.getParcelableExtra(EXTRA_DATA)
                 }
 
-                if (resultCode == Activity.RESULT_OK && data != null) {
+                if (projectionResultCode == Activity.RESULT_OK && projectionData != null) {
                     startForegroundWithNotification()
-                    initMediaProjection(resultCode, data)
+                    initMediaProjection(projectionResultCode, projectionData!!)
                     startMonitoring()
                 }
             }
@@ -172,15 +231,19 @@ class ScreenCaptureService : LifecycleService() {
     }
 
     private fun updateNotification() {
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notif = buildNotification(if (isMonitoring) "Monitoring active" else "Monitoring stopped", alarmPlayer.isAlarmRinging)
-        manager.notify(NOTIFICATION_ID, notif)
+        lifecycleScope.launch(Dispatchers.Main) {
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notif = buildNotification(if (isMonitoring) "Monitoring active" else "Monitoring stopped", alarmPlayer.isAlarmRinging)
+            manager.notify(NOTIFICATION_ID, notif)
+        }
     }
 
     @SuppressLint("WrongConstant")
     private fun initMediaProjection(resultCode: Int, data: Intent) {
         try {
-            mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data)
+            if (mediaProjection == null) {
+                mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data)
+            }
 
             imageReader = ImageReader.newInstance(screenWidth, screenHeight, PixelFormat.RGBA_8888, 2)
             virtualDisplay = mediaProjection?.createVirtualDisplay(
@@ -213,10 +276,12 @@ class ScreenCaptureService : LifecycleService() {
 
         isMonitoring = true
         log("Started monitoring. Target: '${appConfig.preset}' [${appConfig.matchMode.displayName}]", "INFO")
-        android.widget.Toast.makeText(this, "Monitoring Started", android.widget.Toast.LENGTH_SHORT).show()
-        updateNotification()
-        onStatusChanged?.invoke(true, alarmPlayer.isAlarmRinging)
-        OverlayService.instance?.updateStatusUI(true, alarmPlayer.isAlarmRinging, "Monitoring...")
+        lifecycleScope.launch(Dispatchers.Main) {
+            android.widget.Toast.makeText(this@ScreenCaptureService, "Monitoring Started", android.widget.Toast.LENGTH_SHORT).show()
+            updateNotification()
+            onStatusChanged?.invoke(true, alarmPlayer.isAlarmRinging)
+            OverlayService.instance?.updateStatusUI(true, alarmPlayer.isAlarmRinging, "Monitoring...")
+        }
 
         monitoringJob?.cancel()
         monitoringJob = lifecycleScope.launch(Dispatchers.Default) {
@@ -230,7 +295,9 @@ class ScreenCaptureService : LifecycleService() {
                             // Update floating bar with latest OCR (or clear if empty)
                             val cleanDisplay = ocrText.replace('\n', ' ').trim()
                             val previewText = if (cleanDisplay.isBlank()) "Reading..." else cleanDisplay
-                            OverlayService.instance?.updateStatusUI(isMonitoring, alarmPlayer.isAlarmRinging, "Monitoring", previewText)
+                            withContext(Dispatchers.Main) {
+                                OverlayService.instance?.updateStatusUI(isMonitoring, alarmPlayer.isAlarmRinging, "Monitoring", previewText)
+                            }
 
                             if (ocrText.isNotBlank()) {
                                 val disp = if (cleanDisplay.length > 60) cleanDisplay.substring(0, 57) + "..." else cleanDisplay
@@ -278,62 +345,63 @@ class ScreenCaptureService : LifecycleService() {
     }
 
     private fun captureScreenRegion(): Bitmap? {
-        val reader = imageReader ?: return null
-        var image: Image? = null
-        try {
-            image = reader.acquireLatestImage()
-            if (image == null) return null
+        synchronized(this) {
+            val reader = imageReader ?: return null
+            var image: Image? = null
+            try {
+                image = reader.acquireLatestImage()
+                if (image == null) return null
 
-            val planes = image.planes
-            val buffer: ByteBuffer = planes[0].buffer
-            val pixelStride = planes[0].pixelStride
-            val rowStride = planes[0].rowStride
-            val rowPadding = rowStride - pixelStride * screenWidth
-            val actualWidth = screenWidth + rowPadding / pixelStride
+                val planes = image.planes
+                val buffer: ByteBuffer = planes[0].buffer
+                val pixelStride = planes[0].pixelStride
+                val rowStride = planes[0].rowStride
+                
+                // Re-calculate width based on buffer stride to be safe
+                val actualBufferWidth = rowStride / pixelStride
 
-            val fullBitmap = Bitmap.createBitmap(
-                actualWidth,
-                screenHeight,
-                Bitmap.Config.ARGB_8888
-            )
-            fullBitmap.copyPixelsFromBuffer(buffer)
+                val fullBitmap = Bitmap.createBitmap(
+                    actualBufferWidth,
+                    screenHeight,
+                    Bitmap.Config.ARGB_8888
+                )
+                fullBitmap.copyPixelsFromBuffer(buffer)
 
-            // If border is shown, only capture the selected region
+                // If border is shown, strictly capture the selected region
             if (appConfig.showBorder) {
                 val region = appConfig.selectedRegion
-                if (region != null && region.width() > 10 && region.height() > 10) {
+                if (region != null && region.width() > 5 && region.height() > 5) {
                     val safeLeft = maxOf(0, minOf(region.left, screenWidth - 1))
                     val safeTop = maxOf(0, minOf(region.top, screenHeight - 1))
                     val safeWidth = minOf(region.width(), screenWidth - safeLeft)
                     val safeHeight = minOf(region.height(), screenHeight - safeTop)
 
-                    if (safeWidth > 10 && safeHeight > 10) {
+                    if (safeWidth > 5 && safeHeight > 5) {
                         val cropped = Bitmap.createBitmap(fullBitmap, safeLeft, safeTop, safeWidth, safeHeight)
                         fullBitmap.recycle()
                         return cropped
                     }
                 }
+                // If border is enabled but region is invalid, don't fallback to full screen to avoid "leaks"
+                return null
             }
 
-            // If not showing border or region invalid, return the screen (but crop the row padding)
-            if (actualWidth != screenWidth) {
+                // Return entire screen (cropping out stride padding)
                 val screenOnly = Bitmap.createBitmap(fullBitmap, 0, 0, screenWidth, screenHeight)
                 fullBitmap.recycle()
                 return screenOnly
+            } catch (e: Exception) {
+                return null
+            } finally {
+                image?.close()
             }
-
-            return fullBitmap
-        } catch (e: Exception) {
-            return null
-        } finally {
-            image?.close()
         }
     }
 
     private fun triggerMatchAlert() {
-        if (appConfig.soundAlert) {
-            alarmPlayer.triggerAlarm(appConfig.continuousBeep, appConfig.beepInterval)
-        }
+        // Main app is now silent as requested. No local sound or vibration.
+        // alarmPlayer.triggerAlarm(appConfig.continuousBeep, appConfig.beepInterval)
+        
         com.screenocr.monitor.firebase.FirebaseSyncManager.getInstance(this).pushAlert("Target matched: ${appConfig.preset}")
     }
 
@@ -344,10 +412,12 @@ class ScreenCaptureService : LifecycleService() {
         monitoringJob = null
         stopAlarm()
         log("Stopped monitoring.", "INFO")
-        android.widget.Toast.makeText(this, "Monitoring Stopped", android.widget.Toast.LENGTH_SHORT).show()
-        updateNotification()
-        onStatusChanged?.invoke(false, false)
-        OverlayService.instance?.updateStatusUI(false, false, "Stopped")
+        lifecycleScope.launch(Dispatchers.Main) {
+            android.widget.Toast.makeText(this@ScreenCaptureService, "Monitoring Stopped", android.widget.Toast.LENGTH_SHORT).show()
+            updateNotification()
+            onStatusChanged?.invoke(false, false)
+            OverlayService.instance?.updateStatusUI(false, false, "Stopped")
+        }
     }
 
     fun stopAlarm() {
@@ -370,13 +440,19 @@ class ScreenCaptureService : LifecycleService() {
     }
 
     private fun log(message: String, tag: String) {
-        val time = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-        onLogReceived?.invoke(time, message, tag)
+        lifecycleScope.launch(Dispatchers.Main) {
+            val time = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+            onLogReceived?.invoke(time, message, tag)
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         stopMonitoring()
+        
+        val displayManager = getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+        displayManager.unregisterDisplayListener(displayListener)
+        
         if (::alarmPlayer.isInitialized) {
             alarmPlayer.release()
         }

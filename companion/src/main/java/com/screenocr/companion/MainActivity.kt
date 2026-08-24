@@ -45,6 +45,14 @@ class MainActivity : AppCompatActivity() {
 
         setupUI()
         loadSavedSettings()
+        
+        // Auto-reconnect if it was monitoring
+        if (getSharedPreferences("companion_prefs", Context.MODE_PRIVATE).getBoolean("was_monitoring", false)) {
+            val uid = binding.etTargetUid.text.toString().trim()
+            if (uid.isNotEmpty()) {
+                startMonitoring(uid)
+            }
+        }
     }
 
     private fun setupUI() {
@@ -88,6 +96,21 @@ class MainActivity : AppCompatActivity() {
         if (soundUriStr != null) {
             updateSoundDisplayName(Uri.parse(soundUriStr))
         }
+
+        // Restore last known remote config from prefs if available
+        val lastPreset = prefs.getString("last_preset", "")
+        val lastMode = prefs.getInt("last_mode", MatchMode.CONTAINS.ordinal)
+        val lastInterval = prefs.getString("last_interval", "1.5")
+        val lastCooldown = prefs.getString("last_cooldown", "10")
+        
+        binding.etRemotePreset.setText(lastPreset)
+        binding.spinnerMatchMode.setSelection(lastMode)
+        binding.etInterval.setText(lastInterval)
+        binding.etCooldown.setText(lastCooldown)
+        binding.cbCaseSensitive.isChecked = prefs.getBoolean("last_case", false)
+        binding.sbFuzzyThreshold.progress = prefs.getInt("last_fuzzy", 80)
+        binding.cbSoundAlert.isChecked = prefs.getBoolean("last_sound", true)
+        binding.cbContinuousBeep.isChecked = prefs.getBoolean("last_beep", false)
     }
 
     private fun toggleMonitoring() {
@@ -106,6 +129,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startMonitoring(uid: String) {
         saveLocalPreference("target_uid", uid)
+        saveLocalPreference("was_monitoring", true)
         
         val serviceIntent = Intent(this, AlertListenerService::class.java).apply {
             putExtra("device_id", uid)
@@ -131,6 +155,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun stopMonitoring() {
         stopService(Intent(this, AlertListenerService::class.java))
+        saveLocalPreference("was_monitoring", false)
         
         isMonitoring = false
         binding.btnToggleConnection.text = "Start Monitoring"
@@ -148,6 +173,19 @@ class MainActivity : AppCompatActivity() {
         binding.etCooldown.setText(config.cooldownSec.toString())
         binding.cbSoundAlert.isChecked = config.soundAlert
         binding.cbContinuousBeep.isChecked = config.continuousBeep
+
+        // Persist these locally as "last known"
+        getSharedPreferences("companion_prefs", Context.MODE_PRIVATE).edit().apply {
+            putString("last_preset", config.preset)
+            putInt("last_mode", config.matchMode.ordinal)
+            putBoolean("last_case", config.caseSensitive)
+            putInt("last_fuzzy", config.fuzzyThreshold)
+            putString("last_interval", config.pollInterval.toString())
+            putString("last_cooldown", config.cooldownSec.toString())
+            putBoolean("last_sound", config.soundAlert)
+            putBoolean("last_beep", config.continuousBeep)
+            apply()
+        }
     }
 
     private fun pushConfigToRemote() {
@@ -170,6 +208,13 @@ class MainActivity : AppCompatActivity() {
         getSharedPreferences("companion_prefs", Context.MODE_PRIVATE)
             .edit()
             .putString(key, value)
+            .apply()
+    }
+
+    private fun saveLocalPreference(key: String, value: Boolean) {
+        getSharedPreferences("companion_prefs", Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(key, value)
             .apply()
     }
 

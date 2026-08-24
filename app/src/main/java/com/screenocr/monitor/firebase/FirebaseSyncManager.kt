@@ -70,6 +70,12 @@ class FirebaseSyncManager private constructor(private val context: android.conte
                 val remoteConfig = snapshot.getValue(AppConfig::class.java)
                 if (remoteConfig != null) {
                     Log.d("FirebaseSyncManager", "Remote config updated: $remoteConfig")
+                    
+                    // Merge remote config with local region to prevent "forgetting" the area
+                    val localConfig = prefsManager.loadConfig()
+                    remoteConfig.selectedRegion = localConfig.selectedRegion
+                    remoteConfig.showBorder = localConfig.showBorder
+                    
                     prefsManager.saveConfig(remoteConfig)
                     onConfigUpdated?.invoke(remoteConfig)
                 }
